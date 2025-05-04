@@ -1,4 +1,3 @@
-
 class graph_representation:
     def __init__(self, directed=False):
         self.nodes = set()
@@ -176,17 +175,55 @@ class graph_representation:
 
         return list(nodes_in_tree), path_edges, parent, distance
     
-    def graph_coloring(self):
-        colors = {}
-        for node in self.adj_list:
-            used_colors = {colors[neighbor] for neighbor in self.adj_list[node] if neighbor in colors}
-            for color in range(len(self.adj_list)):
-                if color not in used_colors:
-                    colors[node] = color
-                    break
-        return colors
+    def kruskal(self):
+        # Sorting edges by weight
+        sorted_edges = sorted(self.edges, key=lambda edge: self.weights[edge])
 
+        ds = DisjointSet(self.nodes)
+
+        mst_edges = []
+        total_weight = 0
+
+        for u, v in sorted_edges:
+            # If u and v are in different groups, then it is safe to add edge
+            if ds.find(u) != ds.find(v):
+                ds.union(u, v)
+                mst_edges.append((u, v))
+                total_weight += self.weights[(u, v)]
+
+        return mst_edges, total_weight, self.nodes
+
+class DisjointSet:
+    def __init__(self, nodes):
+         # each node is the parent of itself "each node in its own group"
+        self.parent = {node: node for node in nodes}
+        # The rank is like the height of the tree, at first is 0
+        self.rank = {node: 0 for node in nodes}
+
+    # Finding the leader of the group the node belongs to, in order to merge after
+    def find(self, node):
+        if self.parent[node] != node:
+            # Recursively check for the leader node of the group
+            self.parent[node] = self.find(self.parent[node])
+        
+        return self.parent[node]
     
+    def union(self, u, v):
+        # Getting the leader of both the nodes
+        root_u = self.find(u)
+        root_v = self.find(v)
+
+        # Merging only in the case where they don't belong the same group
+        if root_u != root_v:
+            # We will attach the smaller tree under the bigger tree
+            if self.rank[root_u] < self.rank[root_v]:
+                self.parent[root_u] = root_v
+            elif self.rank[root_u] > self.rank[root_v]:
+                self.parent[root_v] = root_u
+            else:
+                self.parent[root_v] = root_u
+                self.rank[root_u] += 1
+
 # The Unit tests
 myapp = graph_representation()
 myapp.add_edge('A', 'B', 10)
@@ -199,23 +236,3 @@ myapp.adjacency_list()
 nodes_in_tree, dfs_tree = myapp.DFS('A')
 print(nodes_in_tree)
 print(dfs_tree)
-
-print(myapp.graph_coloring())
-
-
-"""  elements = [source]
-        explored = set()
-        min_tree = []
-        min_weight = float('inf')
-
-        for element in elements:
-            min_weight = float('inf')
-            for neighbor in self.adj_list[element]:
-                if min_weight > self.weights[(element, neighbor)] and neighbor not in explored:
-                    min_weight = self.weights[(element, neighbor)]
-                    elements.append(neighbor)
-                    explored.add(neighbor)
-                    min_tree.append((element, neighbor, min_weight))
-            
-        return min_tree
-         """
