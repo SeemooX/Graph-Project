@@ -1,4 +1,6 @@
-class graph_representation:
+from collections import deque, defaultdict
+
+class GraphRep:
     def __init__(self, directed=False):
         self.nodes = set()
         self.adj_list = {}
@@ -17,6 +19,9 @@ class graph_representation:
             self.adj_list[node2].append(node1)
 
         self.edges.append((node1, node2, weight))
+
+        self.nodes.add(node1)
+        self.nodes.add(node2)
 
         if weight != None:
             self.weights[(node1, node2)] = weight
@@ -96,10 +101,13 @@ class graph_representation:
         dij_edges = []
         for node in parent:
             if parent[node] is not None:
-                dij_edges.append((parent[node], node))
+                u = parent[node]
+                v = node
+                w = self.weights[(u, v)]
+                dij_edges.append((u, v, w))
         # Extracting nodes
         nodes_in_tree = set()
-        for u, v in dij_edges:
+        for u, v, w in dij_edges:
             nodes_in_tree.add(u)
             nodes_in_tree.add(v)
 
@@ -130,7 +138,7 @@ class graph_representation:
             nodes_in_tree.add(u)
             nodes_in_tree.add(v)
 
-        return list(nodes_in_tree), [(u, v) for u, v, w in min_tree], min_tree
+        return list(nodes_in_tree), [(u, v, w) for u, v, w in min_tree], min_tree
 
     def Bellman_Ford(self, source):
         # Initialization
@@ -165,40 +173,96 @@ class graph_representation:
         path_edges = set()
         for v in self.adj_list.keys():
             if parent[v] is not None:
-                path_edges.add((parent[v], v))
+                path_edges.add((parent[v], v, self.weights[(parent[v], v)]))
 
         # Getting the nodes
         nodes_in_tree = set()
-        for u, v in path_edges:
+        for u, v, w in path_edges:
             nodes_in_tree.add(u)
             nodes_in_tree.add(v)
 
         return list(nodes_in_tree), path_edges, parent, distance
     
     def kruskal(self):
-        # Sorting edges by weight
-        sorted_edges = sorted(self.edges, key=lambda edge: self.weights[edge])
 
-        ds = DisjointSet(self.nodes)
+        ds = DisjointSet()
+        for node in self.nodes:
+            ds.parent[node] = node
+            ds.rank[node] = 0
+
+        # Sorting edges by weight
+        sorted_edges = sorted(self.edges, key=lambda edge: edge[2])
 
         mst_edges = []
         total_weight = 0
 
-        for u, v in sorted_edges:
+        for u, v, w in sorted_edges:
             # If u and v are in different groups, then it is safe to add edge
             if ds.find(u) != ds.find(v):
                 ds.union(u, v)
-                mst_edges.append((u, v))
+                mst_edges.append((u, v, w))
                 total_weight += self.weights[(u, v)]
 
-        return mst_edges, total_weight, self.nodes
+        return self.nodes, mst_edges, total_weight
+    
+    def graph_coloring(self):
+        colors = {}
+        for node in self.adj_list:
+            used_colors = set(colors[neighbor] for neighbor in self.adj_list[node] if neighbor in colors)
+            color = 0
+            while color in used_colors:
+                color += 1
+            colors[node] = color
+        return colors
+    
+    def ford_fulkerson(self, source, sink):
+        residual = GraphHelper.build_residual_graph(self)
+        parent = {}
+        max_flow = 0
+
+        # Initialize flow dict (for final output)
+        flow_dict = {(u, v): 0 for u, v, _ in self.edges}
+
+        while GraphHelper.bfs(residual, source, sink, parent):
+            # Find bottleneck
+            path_flow = float('inf')
+            v = sink
+            while v != source:
+                u = parent[v]
+                capacity = residual.weights[(u, v)]
+                path_flow = min(path_flow, capacity)
+                v = parent[v]
+
+            # Update residual capacities
+            v = sink
+            while v != source:
+                u = parent[v]
+                residual.weights[(u, v)] -= path_flow
+                residual.weights[(v, u)] += path_flow
+                v = parent[v]
+
+            max_flow += path_flow
+            parent.clear()
+
+        # After all flow pushed → compute flow on each original edge
+        edges_with_flow = []
+        for u, v, _ in self.edges:
+            original_capacity = self.weights[(u, v)]
+            residual_capacity = residual.weights[(u, v)]
+            flow_sent = original_capacity - residual_capacity
+            edges_with_flow.append((u, v, flow_sent))
+
+        return max_flow, list(self.nodes), edges_with_flow
+    
+
+
 
 class DisjointSet:
-    def __init__(self, nodes):
+    def __init__(self):
          # each node is the parent of itself "each node in its own group"
-        self.parent = {node: node for node in nodes}
+        self.parent = {}
         # The rank is like the height of the tree, at first is 0
-        self.rank = {node: 0 for node in nodes}
+        self.rank = {}
 
     # Finding the leader of the group the node belongs to, in order to merge after
     def find(self, node):
@@ -224,15 +288,66 @@ class DisjointSet:
                 self.parent[root_v] = root_u
                 self.rank[root_u] += 1
 
+class GraphHelper:
+    @staticmethod
+    def build_residual_graph(graph):
+        residual = GraphRep(directed=True)
+        residual.nodes = set(graph.nodes)
+        residual.adj_list = {u: [] for u in graph.nodes}
+        residual.edges = []
+        residual.weights = {}
+
+        for u, v, _ in graph.edges:
+            capacity = graph.weights[(u, v)]
+
+            # Forward edge
+            residual.adj_list[u].append(v)
+            residual.edges.append((u, v, capacity))
+            residual.weights[(u, v)] = capacity
+
+            # Reverse edge with 0 capacity
+            if (v, u) not in residual.weights:
+                residual.adj_list[v].append(u)
+                residual.edges.append((v, u, 0))
+                residual.weights[(v, u)] = 0
+
+        return residual
+
+    @staticmethod
+    def bfs(residual, source, sink, parent):
+        visited = set()
+        queue = deque([source])
+        visited.add(source)
+
+        while queue:
+            u = queue.popleft()
+            for v in residual.adj_list[u]:
+                capacity = residual.weights[(u, v)]
+                if v not in visited and capacity > 0:
+                    parent[v] = u
+                    if v == sink:
+                        return True
+                    visited.add(v)
+                    queue.append(v)
+        return False 
+
+
 # The Unit tests
-myapp = graph_representation()
+""" myapp = GraphRep()
 myapp.add_edge('A', 'B', 10)
 myapp.add_edge('B', 'C', 5)
 myapp.add_edge('B', 'D', 2)
 myapp.add_edge('C', 'D', 6)
 myapp.add_edge('D', 'A', 12)
+myapp.add_edge('D', 'X', 12)
+myapp.add_edge('X', 'A', 12)
 myapp.adjacency_list()
 
-nodes_in_tree, dfs_tree = myapp.DFS('A')
-print(nodes_in_tree)
-print(dfs_tree)
+nodes_in_tree, result, total_weight = myapp.kruskal()
+nodes_in_tree1, result1, total_weight1 = myapp.Prim("B")
+print(result)
+print(result1)
+
+
+graphView.plot_graph(nodes_in_tree, result, True, False, "kruskal")
+graphView.plot_graph(nodes_in_tree1, result1, True, False, "Prim") """
