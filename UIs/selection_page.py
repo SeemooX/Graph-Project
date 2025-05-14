@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton, QVBoxLayout, QLabel, QStackedWidget
 from PyQt6.QtCore import Qt
 from UIs.graph_algo_page import GraphAlgorithmPage
+from UIs.lp_input_page import LPInputPage
 
 class SelectionPage(QWidget):
     def __init__(self, main_window):
@@ -32,4 +33,5 @@ class SelectionPage(QWidget):
         self.main_window.switch_page(graph_page)
 
     def go_to_lp_page(self):
-        print("LP page")
+        lp_page = LPInputPage(self.main_window)
+        self.main_window.switch_page(lp_page)
