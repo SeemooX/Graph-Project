@@ -22,10 +22,11 @@ def plot_graph(nodes, edges, show_weights=False, directed=False, title="Graph Vi
     nx.draw(
         G, pos, ax=ax,
         with_labels=True,
-        node_color='lightblue',
+        node_color='black',
         edge_color='gray',
-        node_size=1200,
+        node_size=600,
         font_size=14,
+        font_color = 'white',
         arrows=directed,
         connectionstyle='arc3,rad=0.1' if directed else 'arc3'
     )
@@ -39,11 +40,11 @@ def plot_graph(nodes, edges, show_weights=False, directed=False, title="Graph Vi
     ax.axis('off')
 
 
-def plot_side_by_side(original_nodes, original_edges, result_nodes, result_edges, show_weights, directed):
+def plot_side_by_side(original_nodes, original_edges, result_nodes, result_edges, show_weights, directed, graph_name="Result Graph"):
     fig, axes = plt.subplots(1, 2, figsize=(12, 6))
 
     plot_graph(original_nodes, original_edges, show_weights=show_weights, directed=directed, title="Input Graph", ax=axes[0])
-    plot_graph(result_nodes, result_edges, show_weights=show_weights, directed=directed, title="Result Graph", ax=axes[1])
+    plot_graph(result_nodes, result_edges, show_weights=show_weights, directed=directed, title=graph_name, ax=axes[1])
 
     plt.tight_layout()
     plt.show()

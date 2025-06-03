@@ -9,7 +9,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Algorithm Solver App")
         self.setGeometry(300, 300, 900, 600)
 
-        # The stack of pages
+        # The "QstackWidget" is a stack of pages/widgegts, where only one is shown at a time
         self.stacked_widget = QStackedWidget()
         self.setCentralWidget(self.stacked_widget)
 

@@ -43,12 +43,11 @@ class GaphInputPage(QWidget):
         back_button = QPushButton("Back")
         button_layout.addWidget(run_button)
         button_layout.addWidget(back_button)
+        layout.addLayout(button_layout)
 
-        # Directied or Not
+        # Is the graph directed or Not
         self.directed_checkbox = QCheckBox("Directed graph?")
         layout.addWidget(self.directed_checkbox)
-              
-        layout.addLayout(button_layout)
 
         # Result output
         self.result_output = QTextEdit()
@@ -67,9 +66,7 @@ class GaphInputPage(QWidget):
         else:
             self.edge_input.setPlaceholderText("Enter edges (one per line)\nExample:\nA B 5\nB C 3")
 
-
     def run_algorithm(self):
-        # For now we’ll just show parsed input for testing
         nodes_text = self.node_input.text()
         nodes = [n.strip() for n in nodes_text.split(",") if n.strip() != ""]
 
@@ -104,6 +101,7 @@ class GaphInputPage(QWidget):
                 graph.add_edge(node1, node2, weight)
 
         result_text = ""
+
         if self.algorithm_name == "DFS":
             start_node = nodes[0] if nodes else None
             nodes_in_tree, edges_in_tree = graph.DFS(start_node)
@@ -152,7 +150,8 @@ class GaphInputPage(QWidget):
             result_nodes=nodes_in_tree,
             result_edges=edges_in_tree,
             show_weights=(self.algorithm_name not in ["DFS", "BFS"]),
-            directed=directed
+            directed=directed,
+            graph_name=self.algorithm_name
             )
 
     def go_back(self):

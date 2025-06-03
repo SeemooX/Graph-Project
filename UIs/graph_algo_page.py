@@ -38,6 +38,7 @@ class GraphAlgorithmPage(QWidget):
 
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
+        # The lambda's role here is to make sure that the "go_to_input_page" doesn't get called until the user click the button
         BFS_button.clicked.connect(lambda: self.go_to_input_page("BFS"))
         DFS_button.clicked.connect(lambda: self.go_to_input_page("DFS"))
         Dijkstra_button.clicked.connect(lambda: self.go_to_input_page("Dijkstra"))

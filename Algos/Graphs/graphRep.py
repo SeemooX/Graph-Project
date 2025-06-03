@@ -343,6 +343,14 @@ myapp.add_edge('D', 'X', 12)
 myapp.add_edge('X', 'A', 12)
 myapp.adjacency_list()
 
+A B 10
+B C 5
+B D 2
+C D 6
+D A 12
+D X 12
+X A 12
+
 nodes_in_tree, result, total_weight = myapp.kruskal()
 nodes_in_tree1, result1, total_weight1 = myapp.Prim("B")
 print(result)

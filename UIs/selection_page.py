@@ -1,4 +1,6 @@
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton, QVBoxLayout, QLabel, QStackedWidget
+# This contains all the visual elements, the building blocks of the user interface
+from PyQt6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QLabel
+# This acts as the engine behind the app "act like the nervous system of the app", it handels communication, internal state..
 from PyQt6.QtCore import Qt
 from UIs.graph_algo_page import GraphAlgorithmPage
 from UIs.lp_input_page import LPInputPage
